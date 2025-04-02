@@ -128,4 +128,169 @@ EventHub is a web platform that enables students to discover and participate in 
 - Includes event reminders, deadline alerts, and important announcements.
 - Allows users to dismiss or mute notifications.
 - Updates automatically with new event alerts.
+# Event Management System
+
+## Table of Contents
+- [Overview](#overview)
+- [High-Level Design (HLD)](#high-level-design-hld)
+  - [Architecture Overview](#architecture-overview)
+  - [Interaction Flow](#interaction-flow)
+- [Low-Level Design (LLD)](#low-level-design-lld)
+  - [Database Schema](#database-schema)
+  - [API Endpoints](#api-endpoints)
+- [Code Implementation](#code-implementation)
+  - [Backend: Spring Boot](#backend-spring-boot)
+  - [Frontend: React](#frontend-react)
+- [Summary](#summary)
+
+---
+
+## Overview
+The Event Management System is a web application designed to facilitate event registrations, payments, and user interactions in an efficient and secure manner. The system is built using **React.js** for the frontend, **Spring Boot** for the backend, and **MySQL** for data storage.
+
+## High-Level Design (HLD)
+### Architecture Overview
+- **Frontend:** Developed using **React.js**, with UI/UX prototyped in **Figma**.
+- **Backend:** Built with **Spring Boot**, exposing REST APIs for various functionalities.
+- **Database:** Uses **MySQL** for persistent storage.
+
+### Interaction Flow
+1. **React UI** communicates with **Spring Boot** endpoints via RESTful APIs.
+2. **User actions** (e.g., signing up, registering for an event) trigger API calls for validation, transactions, and session management.
+3. **Security** is ensured via **JWT tokens** or **session tokens**, and all sensitive transactions (e.g., payments) are encrypted.
+
+## Low-Level Design (LLD)
+### Database Schema
+#### Users Table
+| Column          | Type          | Description                       |
+|---------------|-------------|--------------------------------|
+| user_id       | INT (PK)     | Unique identifier               |
+| name          | VARCHAR      | User's name                     |
+| email         | VARCHAR      | User's email                    |
+| phone         | VARCHAR      | Contact number                   |
+| password_hash | VARCHAR      | Encrypted password               |
+| created_at    | TIMESTAMP    | Account creation timestamp       |
+| updated_at    | TIMESTAMP    | Last update timestamp           |
+
+#### Events Table
+| Column      | Type          | Description                  |
+|------------|-------------|----------------------------|
+| event_id   | INT (PK)     | Unique identifier          |
+| title      | VARCHAR      | Event name                 |
+| description| TEXT         | Event details              |
+| date       | DATE         | Scheduled event date       |
+| image_url  | VARCHAR      | URL of event image         |
+| category   | VARCHAR      | Event classification       |
+
+#### Registrations Table
+| Column            | Type      | Description                      |
+|-----------------|---------|----------------------------------|
+| registration_id | INT (PK) | Unique identifier                |
+| user_id        | INT (FK) | User registering for the event   |
+| event_id       | INT (FK) | Event being registered for       |
+| registration_date | TIMESTAMP | Registration timestamp         |
+| status         | VARCHAR  | Registration status (Active/Canceled) |
+
+### API Endpoints
+#### User Authentication
+- `POST /api/auth/signup` – Register a new user.
+- `POST /api/auth/login` – Authenticate user and start session.
+- `POST /api/auth/forgot-password` – Initiate password recovery.
+
+#### Event Management
+- `GET /api/events` – Retrieve a list of events with filters.
+- `POST /api/events/{eventId}/register` – Register a user for an event.
+- `PUT /api/registrations/{registrationId}` – Modify or cancel a registration.
+
+#### Secure Payments
+- `POST /api/payments/checkout` – Process payments for events.
+
+#### Event Feedback
+- `POST /api/events/{eventId}/feedback` – Submit user feedback.
+
+#### Club Details
+- `GET /api/clubs` – Fetch all club details.
+- `GET /api/clubs/{clubId}` – Retrieve details of a specific club.
+
+## Code Implementation
+### Backend: Spring Boot
+#### UserController (Authentication)
+```java
+@RestController
+@RequestMapping("/api/auth")
+public class UserController {
+    
+    @Autowired
+    private UserService userService;
+
+    @PostMapping("/signup")
+    public ResponseEntity<?> registerUser(@RequestBody UserDto userDto) {
+        try {
+            User newUser = userService.registerUser(userDto);
+            return ResponseEntity.ok(newUser);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Registration failed: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> loginUser(@RequestBody LoginDto loginDto) {
+        try {
+            String token = userService.authenticateUser(loginDto);
+            return ResponseEntity.ok(new AuthResponse(token));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+        }
+    }
+}
+```
+
+### Frontend: React
+#### Login Component
+```javascript
+import React, { useState } from 'react';
+import axios from 'axios';
+
+const LoginForm = ({ onLoginSuccess }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post('/api/auth/login', { email, password });
+      onLoginSuccess(response.data.token);
+    } catch (err) {
+      setError('Invalid credentials. Please try again.');
+    }
+  };
+
+  return (
+    <form onSubmit={handleLogin}>
+      <div>
+        <label>Email:</label>
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+      </div>
+      <div>
+        <label>Password:</label>
+        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+      </div>
+      {error && <p className="error">{error}</p>}
+      <button type="submit">Login</button>
+      <p><a href="/forgot-password">Forgot Password?</a></p>
+    </form>
+  );
+};
+
+export default LoginForm;
+```
+
+## Summary
+- **Frontend:** React.js UI interacts with the backend using REST APIs.
+- **Backend:** Spring Boot handles authentication, event management, and payments.
+- **Database:** MySQL ensures structured and optimized storage with foreign key constraints.
+
+This document serves as a comprehensive guide for the project, covering both HLD and LLD aspects. The code snippets provide a starting point for implementation, ensuring a well-integrated system for event management.
+
 
