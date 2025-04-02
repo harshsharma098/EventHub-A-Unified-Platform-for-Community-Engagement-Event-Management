@@ -193,7 +193,7 @@ The Event Management System is a web application designed to facilitate event re
 
 ### API Endpoints
 #### User Authentication
-- `POST /api/auth/signup` – Register a new user.
+- `POST /api/auth/register` – Register a new user.
 - `POST /api/auth/login` – Authenticate user and start session.
 - `POST /api/auth/forgot-password` – Initiate password recovery.
 
